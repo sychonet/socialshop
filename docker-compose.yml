@@ -1,0 +1,31 @@
+version: "3.0" # Specify docker-compose version
+
+services: # Define services to be run
+  database:
+    image: mysql:8.0 # Specify image to build container from
+    ports:
+      - "3306:3306" # Specify port forwarding
+      - "33060:33060" # Specify port forwarding
+    env_file: # Specify environment variables file
+      - .env
+    container_name: socialshop_database  # Specify name for the container
+  search:
+    image: elasticsearch:7.6.2 # Specify image to build container from
+    env_file: # Specify environment variables file
+      - .env
+    ports:
+      - "9300:9300" # Specify port forwarding
+      - "9200:9200" # Specify port forwarding
+    container_name: socialshop_search  # Specify name for the container
+  magento2:
+    container_name: socialshop_magento2 # Specify name for the container
+    build: 
+      context: . # Specify path for Dockerfile
+      dockerfile: Dockerfile # File name
+    env_file: # Specify environment variables file
+      - .env
+    ports:
+      - "80:80" # Specify port forwarding
+    links:
+      - database # Links magento to mysql
+      - search # Links magento to elasticsearch

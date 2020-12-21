@@ -1,2 +1,4 @@
 # Environment file
-.env
+.elasticsearch.env
+.magento2.env
+.mysql.env

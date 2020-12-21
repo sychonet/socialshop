@@ -1,12 +1,10 @@
 #Dockerfile to be used in CI-CD
 
-FROM php:7.4.0-apache
+FROM php:7.4.0-fpm
 WORKDIR /var/www/html
 RUN apt-get update
-RUN apt-get -yq install libapache2-mod-security2 unzip zlib1g-dev libicu-dev libxml2-dev libxslt1-dev libzip-dev libpng-dev libjpeg-dev libfreetype6-dev libwebp-dev libxpm-dev
-RUN cd /usr/local/etc/php/conf.d/ && echo 'memory_limit = 3G\ndate.timezone = Asia/Kolkata\nrealpath_cache_size = 10M\nrealpath_cache_ttl = 7200\nopcache.save_comments = 1' >> /usr/local/etc/php/conf.d/docker-php-custom.ini
-RUN a2enmod rewrite deflate headers ssl security2 proxy_http
-RUN service apache2 restart
+RUN apt-get -yq install nginx unzip zlib1g-dev libicu-dev libxml2-dev libxslt1-dev libzip-dev libpng-dev libjpeg-dev libfreetype6-dev libwebp-dev libxpm-dev
+RUN cd /usr/local/etc/php/conf.d/ && echo 'memory_limit = 3G\nmax_execution_time = 1800\nzlib.output_compression = On\ndate.timezone = Asia/Kolkata\nrealpath_cache_size = 10M\nrealpath_cache_ttl = 7200\nopcache.save_comments = 1' >> /usr/local/etc/php/conf.d/docker-php-custom.ini
 RUN docker-php-ext-configure gd --with-jpeg --with-freetype
 RUN docker-php-ext-install bcmath intl pdo_mysql soap xsl zip sockets gd opcache
 RUN curl https://getcomposer.org/composer-1.phar --output composer.phar \
@@ -18,3 +16,10 @@ RUN cd magento2 && find var generated vendor pub/static pub/media app/etc -type 
 RUN cd magento2 && find var generated vendor pub/static pub/media app/etc -type d -exec chmod g+ws {} +
 RUN cd magento2 && chown -R :www-data .
 RUN cd magento2 && chmod u+x bin/magento
+COPY ./nginx/sites-available/www.shopkey.local.conf /etc/nginx/sites-available/www.shopkey.local.conf
+RUN ln -s /etc/nginx/sites-available/www.shopkey.local.conf /etc/nginx/sites-enabled
+RUN nginx -t
+COPY scripts/startup.sh /temp/startup.sh
+COPY scripts/wait-for-it.sh /temp/wait-for-it.sh
+RUN chmod +x /temp/*.sh
+CMD /temp/startup.sh
